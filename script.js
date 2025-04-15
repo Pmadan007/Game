@@ -1,109 +1,34 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+// script.js const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d"); canvas.width = window.innerWidth * 0.95; canvas.height = 300;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+let score = 0; let player = { x: 50, y: canvas.height - 60, width: 40, height: 40, vy: 0, jumpPower: 15, gravity: 1, grounded: true };
 
-let score = 0;
-let gameOver = false;
+let enemies = []; let enemyNames = ["Tanush", "Divraaj", "Irya", "Khanak"]; let enemySprites = ["pixel_dude.png", "pixel_dude2.png", "pixel_girl.png", "pixel_girl2.png"];
 
-const gravity = 0.5;
-let jumpPower = -12;
+function drawPlayer() { ctx.fillStyle = "blue"; ctx.fillRect(player.x, player.y, player.width, player.height); }
 
-const player = {
-  x: 50,
-  y: canvas.height - 150,
-  width: 50,
-  height: 50,
-  yVelocity: 0,
-  jump() {
-    if (this.y >= canvas.height - 150) {
-      this.yVelocity = jumpPower;
-    }
-  },
-  update() {
-    this.yVelocity += gravity;
-    this.y += this.yVelocity;
+function drawEnemies() { ctx.fillStyle = "red"; enemies.forEach(enemy => { ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height); }); }
 
-    if (this.y > canvas.height - 150) {
-      this.y = canvas.height - 150;
-      this.yVelocity = 0;
-    }
-  },
-  draw() {
-    ctx.fillStyle = "blue"; // Replace with image later
-    ctx.fillRect(this.x, this.y, this.width, this.height);
-  }
-};
+function updatePlayer() { player.y += player.vy; if (player.y + player.height < canvas.height) { player.vy += player.gravity; player.grounded = false; } else { player.vy = 0; player.y = canvas.height - player.height; player.grounded = true; } }
 
-const enemies = [];
-const names = ["Tanush", "Divraaj", "Irya", "Khanak", "Enemy5", "Enemy6", "Enemy7", "Enemy8", "Enemy9", "Enemy10", "Enemy11"];
+function createEnemy() { const enemy = { x: canvas.width, y: canvas.height - 40, width: 40, height: 40, speed: 6 }; enemies.push(enemy); }
 
-function spawnEnemy() {
-  const name = names[Math.floor(Math.random() * names.length)];
-  enemies.push({
-    x: canvas.width,
-    y: canvas.height - 150,
-    width: 50,
-    height: 50,
-    name,
-    speed: 6
-  });
+function updateEnemies() { enemies.forEach((enemy, index) => { enemy.x -= enemy.speed; if (enemy.x + enemy.width < 0) { enemies.splice(index, 1); score++; document.getElementById("score").innerText = Score: ${score}; }
+
+if (
+  player.x < enemy.x + enemy.width &&
+  player.x + player.width > enemy.x &&
+  player.y < enemy.y + enemy.height &&
+  player.y + player.height > enemy.y
+) {
+  alert("Oops! You hit an alliance member! Refresh to try again.");
+  document.location.reload();
 }
 
-function updateEnemies() {
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    enemies[i].x -= enemies[i].speed;
+}); }
 
-    // Collision
-    if (
-      player.x < enemies[i].x + enemies[i].width &&
-      player.x + player.width > enemies[i].x &&
-      player.y < enemies[i].y + enemies[i].height &&
-      player.y + player.height > enemies[i].y
-    ) {
-      gameOver = true;
-    }
+function gameLoop() { ctx.clearRect(0, 0, canvas.width, canvas.height); drawPlayer(); drawEnemies(); updatePlayer(); updateEnemies(); requestAnimationFrame(gameLoop); }
 
-    if (enemies[i].x + enemies[i].width < 0) {
-      enemies.splice(i, 1);
-      score++;
-      document.getElementById("score").textContent = `Score: ${score}`;
-    }
-  }
-}
+setInterval(createEnemy, 2000); gameLoop();
 
-function drawEnemies() {
-  enemies.forEach((enemy) => {
-    ctx.fillStyle = "red"; // Replace with images
-    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-    ctx.fillStyle = "white";
-    ctx.fillText(enemy.name, enemy.x + 5, enemy.y + 30);
-  });
-}
+document.addEventListener("keydown", e => { if ((e.key === " " || e.key === "ArrowUp") && player.grounded) { player.vy = -player.jumpPower; player.grounded = false; } });
 
-function loop() {
-  if (gameOver) {
-    ctx.fillStyle = "black";
-    ctx.font = "40px Arial";
-    ctx.fillText("Game Over! Vote wisely.", canvas.width / 2 - 150, canvas.height / 2);
-    return;
-  }
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  player.update();
-  player.draw();
-
-  updateEnemies();
-  drawEnemies();
-
-  requestAnimationFrame(loop);
-}
-
-setInterval(spawnEnemy, 2000);
-loop();
-
-window.addEventListener("touchstart", () => {
-  player.jump();
-});
